@@ -13,6 +13,10 @@ public class noisemaps extends JPanel{
         g.drawImage(this.img, 0, 0, null);
     }
 
+    public void noise(int x,int y){
+        
+    }
+
     public void generateMap(){
         BufferedImage newImage = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
         for(int x =0;x<WIDTH;x++){
