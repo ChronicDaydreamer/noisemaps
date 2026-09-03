@@ -5,8 +5,8 @@ import java.awt.*;
 import java.io.*;
 public class noisemaps extends JPanel{
     BufferedImage img;
-    int WIDTH=1008;
-    int HEIGHT=1008;
+    int WIDTH=1024;
+    int HEIGHT=1024;
     int chunkSize=64;
     vector[][] gradientVectors;
     @Override
@@ -18,17 +18,23 @@ public class noisemaps extends JPanel{
         vector[][] gradientVects = new vector[(this.WIDTH/this.chunkSize)+2][(this.HEIGHT/this.chunkSize)+2];
         long seed=0;
         Random random = new Random(seed);
-        for(int gradX=0; gradX<this.WIDTH/this.chunkSize+2;gradX++){
-            for(int gradY=0;gradY<this.HEIGHT/this.chunkSize+2;gradY++){
-                vector newVector=(new vector(random.nextDouble(),random.nextDouble())).normalize();
+        for(int gradX=0; gradX<(this.WIDTH/this.chunkSize)+2;gradX++){
+            for(int gradY=0;gradY<(this.HEIGHT/this.chunkSize)+2;gradY++){
+                vector newVector=(new vector(random.nextDouble(2)-1,random.nextDouble(2)-1)).normalize();
                 gradientVects[gradX][gradY]=newVector;
             }
         }
         this.gradientVectors=gradientVects;
     }
-    public void printVectorArray(vector[][] array){
 
+    public void printVectorArray(vector[][] array){
+        for(int x=0; x<(this.WIDTH/this.chunkSize)+2;x++){
+            for(int y=0;y<(this.HEIGHT/this.chunkSize)+2;y++){
+                array[x][y].printVector();
+            }
+        }
     }
+
     public double lerp(double a, double b, double x){
         return a+x*(b-a);
     }
@@ -36,10 +42,10 @@ public class noisemaps extends JPanel{
         return 6*Math.pow(x,5)-15*Math.pow(x,4)+10*Math.pow(x,3);
     }
     public double noise(int x,int y){
-        double u=fade(((double)(x%this.chunkSize))/this.chunkSize);
-        double v=fade(((double)(y%this.chunkSize))/this.chunkSize);
+        double u=((double)(x%this.chunkSize))/this.chunkSize;
+        double v=((double)(y%this.chunkSize))/this.chunkSize;
 
-        vector currentCoords=new vector(u,v);
+        vector currentCoords=new vector(u,v).normalize();
         int xGradGrid=x/this.chunkSize;
         int yGradGrid=y/this.chunkSize;
         double g1=this.gradientVectors[xGradGrid][yGradGrid].dot(currentCoords);
@@ -52,10 +58,15 @@ public class noisemaps extends JPanel{
         double average=lerp(x1,x2,v);
 
         /*System.out.println("new SYstem");
-        System.out.println(this.gradientVectors[xGradGrid][yGradGrid].getX());
-        System.out.println(this.gradientVectors[xGradGrid][yGradGrid].getY());
-        System.out.println(this.gradientVectors[xGradGrid+1][yGradGrid].getX());
-        System.out.println(this.gradientVectors[xGradGrid+1][yGradGrid].getY());
+        //System.out.println(this.gradientVectors[xGradGrid][yGradGrid].getX());
+        //System.out.println(this.gradientVectors[xGradGrid][yGradGrid].getY());
+        //System.out.println(this.gradientVectors[xGradGrid+1][yGradGrid].getX());
+        //System.out.println(this.gradientVectors[xGradGrid+1][yGradGrid].getY());
+        //System.out.println(this.gradientVectors[xGradGrid][yGradGrid+1].getX());
+        //System.out.println(this.gradientVectors[xGradGrid][yGradGrid+1].getY());
+        System.out.println(this.gradientVectors[xGradGrid+1][yGradGrid+1].getX());
+        System.out.println(this.gradientVectors[xGradGrid+1][yGradGrid+1].getY());
+        System.out.println(this.gradientVectors[xGradGrid+1][yGradGrid+1].getMagnitude());
         System.out.println(u);
         System.out.println(v);
         System.out.println(xGradGrid);
@@ -68,7 +79,7 @@ public class noisemaps extends JPanel{
         System.out.println(g4);
         System.out.println(average);*/
         //System.out.println(average);
-        return average;
+        return (average+1)/2;
     }
 
     public void generateMap(){
@@ -102,6 +113,7 @@ public class noisemaps extends JPanel{
         SwingUtilities.invokeLater(() -> {
             noisemaps map=new noisemaps();
             map.generateMap();
+            //map.printVectorArray(map.gradientVectors);
             map.display();
         });
     }
