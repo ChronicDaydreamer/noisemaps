@@ -20,7 +20,8 @@ public class noisemaps extends JPanel{
         Random random = new Random(seed);
         for(int gradX=0; gradX<(this.WIDTH/this.chunkSize)+2;gradX++){
             for(int gradY=0;gradY<(this.HEIGHT/this.chunkSize)+2;gradY++){
-                vector newVector=(new vector(random.nextDouble(2)-1,random.nextDouble(2)-1)).normalize();
+                double angle=random.nextDouble()*2*Math.PI;
+                vector newVector=(new vector(Math.cos(angle), Math.sin(angle)));
                 gradientVects[gradX][gradY]=newVector;
             }
         }
@@ -42,16 +43,14 @@ public class noisemaps extends JPanel{
         return 6*Math.pow(x,5)-15*Math.pow(x,4)+10*Math.pow(x,3);
     }
     public double noise(int x,int y){
-        double u=((double)(x%this.chunkSize))/this.chunkSize;
-        double v=((double)(y%this.chunkSize))/this.chunkSize;
-
-        vector currentCoords=new vector(u,v).normalize();
+        double u=fade(((double)(x%this.chunkSize))/this.chunkSize);
+        double v=fade(((double)(y%this.chunkSize))/this.chunkSize);
         int xGradGrid=x/this.chunkSize;
         int yGradGrid=y/this.chunkSize;
-        double g1=this.gradientVectors[xGradGrid][yGradGrid].dot(currentCoords);
-        double g2=this.gradientVectors[xGradGrid+1][yGradGrid].dot(currentCoords);
-        double g3=this.gradientVectors[xGradGrid][yGradGrid+1].dot(currentCoords);
-        double g4=this.gradientVectors[xGradGrid+1][yGradGrid+1].dot(currentCoords);
+        double g1=this.gradientVectors[xGradGrid][yGradGrid].dot(new vector(u,v));
+        double g2=this.gradientVectors[xGradGrid+1][yGradGrid].dot(new vector(u-1,v));
+        double g3=this.gradientVectors[xGradGrid][yGradGrid+1].dot(new vector(u,v-1));
+        double g4=this.gradientVectors[xGradGrid+1][yGradGrid+1].dot(new vector(u-1,v-1));
 
         double x1=lerp(g1,g2,u);
         double x2=lerp(g3,g4,u);
