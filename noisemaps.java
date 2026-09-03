@@ -42,11 +42,11 @@ public class noisemaps extends JPanel{
     public double fade(double x){
         return 6*Math.pow(x,5)-15*Math.pow(x,4)+10*Math.pow(x,3);
     }
-    public double noise(int x,int y){
-        double u=fade(((double)(x%this.chunkSize))/this.chunkSize);
-        double v=fade(((double)(y%this.chunkSize))/this.chunkSize);
-        int xGradGrid=x/this.chunkSize;
-        int yGradGrid=y/this.chunkSize;
+    public double perlinNoise(double x,double y, int chunkSize){
+        double u=fade(((double)(x%chunkSize))/chunkSize);
+        double v=fade(((double)(y%chunkSize))/chunkSize);
+        int xGradGrid=(int)(x/chunkSize);
+        int yGradGrid=(int)(y/chunkSize);
         double g1=this.gradientVectors[xGradGrid][yGradGrid].dot(new vector(u,v));
         double g2=this.gradientVectors[xGradGrid+1][yGradGrid].dot(new vector(u-1,v));
         double g3=this.gradientVectors[xGradGrid][yGradGrid+1].dot(new vector(u,v-1));
@@ -55,38 +55,28 @@ public class noisemaps extends JPanel{
         double x1=lerp(g1,g2,u);
         double x2=lerp(g3,g4,u);
         double average=lerp(x1,x2,v);
-
-        /*System.out.println("new SYstem");
-        //System.out.println(this.gradientVectors[xGradGrid][yGradGrid].getX());
-        //System.out.println(this.gradientVectors[xGradGrid][yGradGrid].getY());
-        //System.out.println(this.gradientVectors[xGradGrid+1][yGradGrid].getX());
-        //System.out.println(this.gradientVectors[xGradGrid+1][yGradGrid].getY());
-        //System.out.println(this.gradientVectors[xGradGrid][yGradGrid+1].getX());
-        //System.out.println(this.gradientVectors[xGradGrid][yGradGrid+1].getY());
-        System.out.println(this.gradientVectors[xGradGrid+1][yGradGrid+1].getX());
-        System.out.println(this.gradientVectors[xGradGrid+1][yGradGrid+1].getY());
-        System.out.println(this.gradientVectors[xGradGrid+1][yGradGrid+1].getMagnitude());
-        System.out.println(u);
-        System.out.println(v);
-        System.out.println(xGradGrid);
-        System.out.println(yGradGrid);
-        System.out.println(x1);
-        System.out.println(x2);
-        System.out.println(g1);
-        System.out.println(g2);
-        System.out.println(g3);
-        System.out.println(g4);
-        System.out.println(average);*/
-        //System.out.println(average);
         return (average+1)/2;
     }
 
+    public double perlin(int x, int y, int octaves, double persistence){
+        double total=0.0;
+        double frequency=1.0;
+        double amplitude=1.0;
+        double maxVal=0.0;
+        for(int i=0;i<octaves;i++){
+            total+=perlinNoise(x*frequency,y*frequency,32)*amplitude;
+            maxVal+=amplitude;
+            amplitude*=persistence;
+            frequency*=2;
+        }
+        return total/maxVal;
+    }
     public void generateMap(){
         BufferedImage newImage = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
         for(int x =0;x<WIDTH;x++){
             for(int y=0;y<HEIGHT;y++){
                 //Random random=new Random();
-                double value=this.noise(x,y)*255;
+                double value=this.perlin(x,y,8,0.5)*255;
                 //System.out.println(value);
                 int a=255;
                 int r=(int)value;
