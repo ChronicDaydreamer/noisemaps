@@ -24,7 +24,7 @@ public class vector {
     public double getMagnitude(){
         double mag=0.0;
         for(int x=0;x<this.vals.length;x++){
-            mag+=this.vals[x];
+            mag+=Math.pow(this.vals[x],2);
         }
         return Math.sqrt(mag);
     }

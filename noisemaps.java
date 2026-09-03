@@ -14,19 +14,20 @@ public class noisemaps extends JPanel{
         super.paintComponent(g);
         g.drawImage(this.img, 0, 0, null);
     }
-
     public noisemaps(){
         vector[][] gradientVects = new vector[(this.WIDTH/this.chunkSize)+2][(this.HEIGHT/this.chunkSize)+2];
-        double max=1;
-        double min=-1;
         long seed=0;
         Random random = new Random(seed);
         for(int gradX=0; gradX<this.WIDTH/this.chunkSize+2;gradX++){
             for(int gradY=0;gradY<this.HEIGHT/this.chunkSize+2;gradY++){
-                gradientVects[gradX][gradY]=new vector(random.nextDouble(max)-1,random.nextDouble(max)-1);
+                vector newVector=(new vector(random.nextDouble(),random.nextDouble())).normalize();
+                gradientVects[gradX][gradY]=newVector;
             }
         }
         this.gradientVectors=gradientVects;
+    }
+    public void printVectorArray(vector[][] array){
+
     }
     public double lerp(double a, double b, double x){
         return a+x*(b-a);
@@ -66,7 +67,8 @@ public class noisemaps extends JPanel{
         System.out.println(g3);
         System.out.println(g4);
         System.out.println(average);*/
-        return (average+1)/2;
+        //System.out.println(average);
+        return average;
     }
 
     public void generateMap(){
