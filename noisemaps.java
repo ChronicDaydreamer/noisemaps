@@ -110,6 +110,11 @@ public class noisemaps extends JPanel{
         return total/maxVal;
     }
 
+    public double worley(int x, int y, int chunkSize){
+        
+        return 0.0;
+
+    }
     /*
     This generates a bufferedImage object of the actual noisemap by generating noise value between 0-255, and passing that value into each of the rgb channels.
     returns nothing 
@@ -119,6 +124,7 @@ public class noisemaps extends JPanel{
         for(int x =0;x<WIDTH;x++){
             for(int y=0;y<HEIGHT;y++){
                 double value=this.perlin(x,y,8,0.6)*255;
+
                 int a=255;
                 int r=(int)value;
                 int g=(int)value;
