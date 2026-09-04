@@ -40,6 +40,10 @@ public class vector {
         }
         return this;
     }
+    public double getDistance(vector other){
+
+        return Math.sqrt(Math.pow(other.getX()-this.getX(),2)+Math.pow(other.getY()-this.getY(),2));
+    }
     public static void main(String args[]){
         vector vector=new vector(0.6517509285982154,0.758433073561118);
         System.out.println(vector.getMagnitude());
