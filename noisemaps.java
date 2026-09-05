@@ -1,5 +1,7 @@
 import java.awt.image.BufferedImage;
 import java.util.Random;
+import java.util.Vector;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -112,24 +114,52 @@ public class noisemaps extends JPanel{
     }
 
     public double worley(int x, int y, int seedNum){
-        int gridLength=(int)(Math.ceil(Math.sqrt(seedNum)))+1;
+        int gridLength=(int)(Math.ceil(Math.sqrt(seedNum)));
         if(this.worleySeeds==null){
             vector[][] seedVector=new vector[gridLength][gridLength];
             for(int i=0;i<gridLength;i++){
                 for(int j=0;j<gridLength;j++){
-                    seedVector[i][j]=(new vector(this.random.nextDouble(this.WIDTH/gridLength), this.random.nextDouble(this.HEIGHT/gridLength)));
+                    seedVector[i][j]=(new vector(this.random.nextDouble(this.WIDTH/gridLength)/(this.WIDTH/gridLength), this.random.nextDouble(this.HEIGHT/gridLength)/(this.WIDTH/gridLength)));
                 }
             }
             this.worleySeeds=seedVector;
         }
-        double u=(double)(x%(this.WIDTH/gridLength));
-        double v=(double)(y%(this.HEIGHT/gridLength));
+        double u=(double)(x%(this.WIDTH/gridLength))/(this.WIDTH/gridLength);
+        double v=(double)(y%(this.HEIGHT/gridLength))/(this.HEIGHT/gridLength);
         vector currentVector=new vector(u,v);
-        vector currentSeed=this.worleySeeds[x/(this.WIDTH/gridLength)][y/(this.HEIGHT/gridLength)];
-        double distance=currentVector.getDistance(currentSeed)/(this.HEIGHT/gridLength);
+        int currentSeedGridCoordX=x/(this.WIDTH/gridLength);
+        int currentSeedGridCoordY=y/(this.HEIGHT/gridLength);
+        
+        double distance=100000.0;
+        int xGrid=0;
+        int yGrid=0;
+        for(int i=-1;i<2;i++){
+            for(int j=-1;j<2;j++){
+                xGrid=currentSeedGridCoordX+i;
+                yGrid=currentSeedGridCoordY+j;
+                if(currentSeedGridCoordX+i<0){
+                    xGrid=gridLength-1;
+                }
+                if(currentSeedGridCoordX+i>gridLength-1){
+                    xGrid=0;
+                }
+                if(currentSeedGridCoordY+j<0){
+                    yGrid=gridLength-1;
+                }
+                if(currentSeedGridCoordY+j>gridLength-1){
+                    yGrid=0;
+                }
+                if(new vector(currentVector.getX()-i,currentVector.getY()-j).getDistance(new vector(this.worleySeeds[xGrid][yGrid].getX(),this.worleySeeds[xGrid][yGrid].getY()))<distance){
+                    distance=new vector(currentVector.getX()-i,currentVector.getY()-j).getDistance(new vector(this.worleySeeds[xGrid][yGrid].getX(),this.worleySeeds[xGrid][yGrid].getY()));
+                }
+            }
+        }
+        
+        //System.out.println(distance);
         if(distance>1.0){
             distance=1.0;
         }
+
         return distance;
     }
     /*
@@ -141,7 +171,9 @@ public class noisemaps extends JPanel{
         for(int x =0;x<WIDTH;x++){
             for(int y=0;y<HEIGHT;y++){
                 //double value=this.perlin(x,y,8,0.6)*255;
-                double value=this.worley(x, y, 8)*255;
+                double worley=this.worley(x, y, 16);
+                double perlin=this.perlin(x,y,10,0.6);
+                double value=((worley+perlin)/2)*255;
                 int a=255;
                 int r=(int)value;
                 int g=(int)value;
