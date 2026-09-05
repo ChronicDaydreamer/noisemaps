@@ -113,12 +113,18 @@ public class noisemaps extends JPanel{
         return total/maxVal;
     }
 
-    public double worley(int x, int y, int seedNum){
+    /*
+    This is a method which calculates the specific worley noise value at a specific x,y point. Basically, when needed, it generates a large grid of random vectors, which are used as the worley seeds
+    then it takes the distance from the current x,y point and finds the closest seed. the entire grid of x,y is split into chunks, each of which contains one seed. We loop through a 3x3
+    grid of chunks and find which seed the current x,y point is closest to. Finally we return the distance between x,y and the closest seed. This method also wraps around the map, so the produced
+    noisemap is entirely continuous.
+    */
+    public double worleyNoise(int x, int y, int seedNum){
         int gridLength=(int)(Math.ceil(Math.sqrt(seedNum)));
         if(this.worleySeeds==null){
-            vector[][] seedVector=new vector[gridLength][gridLength];
-            for(int i=0;i<gridLength;i++){
-                for(int j=0;j<gridLength;j++){
+            vector[][] seedVector=new vector[this.WIDTH][this.HEIGHT];
+            for(int i=0;i<this.WIDTH;i++){
+                for(int j=0;j<this.HEIGHT;j++){
                     seedVector[i][j]=(new vector(this.random.nextDouble(this.WIDTH/gridLength)/(this.WIDTH/gridLength), this.random.nextDouble(this.HEIGHT/gridLength)/(this.WIDTH/gridLength)));
                 }
             }
@@ -162,6 +168,24 @@ public class noisemaps extends JPanel{
 
         return distance;
     }
+
+    /*
+    This method creates a bunch of worley noise maps and layers them over eachother, which is done by calling into the worleyNoise method an octaves number of times. 
+    Each subsequent octave counts for less towards the final returned noise value.
+    */
+    public double worley(int x, int y, int octaves, double persistence, int seedNum){
+        double total=0.0;
+        int frequency=1;
+        double maxValue=0.0;
+        double amplitude=1.0;
+        for(int i=0;i<octaves;i++){
+            total+=worleyNoise(x,y,seedNum*frequency)*amplitude;
+            frequency*=2;
+            maxValue+=amplitude;
+            amplitude*=persistence;
+        }
+        return total/maxValue;
+    } 
     /*
     This generates a bufferedImage object of the actual noisemap by generating noise value between 0-255, and passing that value into each of the rgb channels.
     returns nothing 
@@ -171,9 +195,10 @@ public class noisemaps extends JPanel{
         for(int x =0;x<WIDTH;x++){
             for(int y=0;y<HEIGHT;y++){
                 //double value=this.perlin(x,y,8,0.6)*255;
-                double worley=this.worley(x, y, 16);
+                double worley=this.worley(x, y, 2,0.2,25);
+                //double worley=this.worleyNoise(x, y, 16);
                 double perlin=this.perlin(x,y,10,0.6);
-                double value=((worley+perlin)/2)*255;
+                double value=((worley))*255;
                 int a=255;
                 int r=(int)value;
                 int g=(int)value;
