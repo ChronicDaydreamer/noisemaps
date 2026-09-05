@@ -8,11 +8,16 @@ import java.io.*;
 /*TODO:
     -new system of generating and storing the gradient vectors
     -rework the printArray() method to be more generalized for any array of vectors
+    -combine actual noise value calc functions into single method which passes into whichever noise function is needed
+    -general optimization
+    -each pixel is independant of one another, so no reason not to do many all at once
+    -threads?
+    -make it so worley noise does not only generate a square number of seeds
 */
 public class noisemaps extends JPanel{
     BufferedImage img;
-    int WIDTH=1024;
-    int HEIGHT=1024;
+    int WIDTH=2048;
+    int HEIGHT=2048;
     int chunkSize=16;
     vector[][] gradientVectors;
     vector[][] worleySeeds;
@@ -32,7 +37,7 @@ public class noisemaps extends JPanel{
     */
     public noisemaps(){
         vector[][] gradientVects = new vector[(this.WIDTH*4)][(this.HEIGHT*4)];
-        this.seed=0;
+        this.seed=100;
         this.random = new Random(seed);
         for(int gradX=0; gradX<(this.WIDTH*4);gradX++){
             for(int gradY=0;gradY<(this.HEIGHT*4);gradY++){
@@ -165,7 +170,6 @@ public class noisemaps extends JPanel{
         if(distance>1.0){
             distance=1.0;
         }
-
         return distance;
     }
 
@@ -196,14 +200,12 @@ public class noisemaps extends JPanel{
     */
     public void generateMap(){
         BufferedImage newImage = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
-        for(int x =0;x<WIDTH;x++){
-            for(int y=0;y<HEIGHT;y++){
-                //double value=this.perlin(x,y,8,0.6)*255;
-                double worley=this.worley(x, y, 2,0.2,25);
-                double invertedWorley=this.invertedWorley(x, y, 1, 0.2, 25);
-                //double worley=this.worleyNoise(x, y, 16);
+        for(int x =0;x<this.WIDTH;x++){
+            for(int y=0;y<this.HEIGHT;y++){
+                double invertedWorley=this.invertedWorley(x, y, 1, 0.4, 16);
+                double worley=this.worleyNoise(x, y, 16);
                 double perlin=this.perlin(x,y,10,0.6);
-                double value=((invertedWorley))*255;
+                double value=((invertedWorley*perlin))*255;
                 int a=255;
                 int r=(int)value;
                 int g=(int)value;
