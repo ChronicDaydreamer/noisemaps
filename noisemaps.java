@@ -47,6 +47,22 @@ public class noisemaps extends JPanel{
             permVecs[i]=(new vector(Math.cos(angle), Math.sin(angle)));
         }
         this.permutationVectors=permVecs;
+        int gridLength=256;
+        int[][] vectKeys=new int[gridLength][gridLength];
+        for(int i=0;i<gridLength;i++){
+            for(int j=0;j<gridLength;j++){
+                vectKeys[i][j]=this.random.nextInt(256);
+            }
+        }
+        this.permVectorKeys=vectKeys;
+
+        vector[][] seedVector=new vector[this.WIDTH][this.HEIGHT];
+        for(int i=0;i<this.WIDTH;i++){
+            for(int j=0;j<this.HEIGHT;j++){
+                seedVector[i][j]=(new vector(this.random.nextDouble(), this.random.nextDouble()));
+            }
+        }
+        this.worleySeeds=seedVector;
     }
 
     /*
@@ -120,17 +136,6 @@ public class noisemaps extends JPanel{
     it does this by passing into the perlinNoise() method for each octave, multiplying the frequency and amplitude of each new pass.
     */
     public double perlin(int x, int y, int octaves, double persistence,int period){
-        if(this.permVectorKeys==null){
-            int gridLength=256;
-            System.out.println(gridLength);
-            int[][] vectKeys=new int[gridLength][gridLength];
-            for(int i=0;i<gridLength;i++){
-                for(int j=0;j<gridLength;j++){
-                    vectKeys[i][j]=this.random.nextInt(256);
-                }
-            }
-            this.permVectorKeys=vectKeys;
-        }
         double total=0.0;
         double frequency=1.0;
         double amplitude=1.0;
@@ -156,13 +161,7 @@ public class noisemaps extends JPanel{
     public double worleyNoise(int x, int y, int seedNum){
         int gridLength=(int)(Math.ceil(Math.sqrt(seedNum)));
         if(this.worleySeeds==null){
-            vector[][] seedVector=new vector[this.WIDTH][this.HEIGHT];
-            for(int i=0;i<this.WIDTH;i++){
-                for(int j=0;j<this.HEIGHT;j++){
-                    seedVector[i][j]=(new vector(this.random.nextDouble(this.WIDTH/gridLength)/(this.WIDTH/gridLength), this.random.nextDouble(this.HEIGHT/gridLength)/(this.WIDTH/gridLength)));
-                }
-            }
-            this.worleySeeds=seedVector;
+            
         }
         double u=(double)(x%(this.WIDTH/gridLength))/(this.WIDTH/gridLength);
         double v=(double)(y%(this.HEIGHT/gridLength))/(this.HEIGHT/gridLength);
@@ -233,9 +232,9 @@ public class noisemaps extends JPanel{
         for(int x =0;x<this.WIDTH;x++){
             for(int y=0;y<this.HEIGHT;y++){
                 //double invertedWorley=this.invertedWorley(x, y, 1, 0.4, 16);
-                //double worley=this.worleyNoise(x, y, 16);
-                double perlin=this.perlin(x,y,10,0.6,256);
-                double value=perlin*255;
+                double worley=this.worley(x, y, 2,0.6,25);
+                //double perlin=this.perlin(x,y,20,0.6,256);
+                double value=worley*255;
                 int a=255;
                 int r=(int)value;
                 int g=(int)value;
