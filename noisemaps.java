@@ -13,14 +13,16 @@ import java.io.*;
     -each pixel is independant of one another, so no reason not to do many all at once
     -threads?
     -make it so worley noise does not only generate a square number of seeds
+    -turn noise functions into 3D
 */
 public class noisemaps extends JPanel{
     BufferedImage img;
     int WIDTH=2048;
     int HEIGHT=2048;
     int chunkSize=16;
-    vector[][] gradientVectors;
     vector[][] worleySeeds;
+    vector[] permutationVectors;
+    int[][] permVectorKeys;
     Random random;
     long seed;
 
@@ -36,17 +38,15 @@ public class noisemaps extends JPanel{
     returns nothing 
     */
     public noisemaps(){
-        vector[][] gradientVects = new vector[(this.WIDTH*4)][(this.HEIGHT*4)];
         this.seed=100;
         this.random = new Random(seed);
-        for(int gradX=0; gradX<(this.WIDTH*4);gradX++){
-            for(int gradY=0;gradY<(this.HEIGHT*4);gradY++){
-                double angle=this.random.nextDouble()*2*Math.PI;
-                vector newVector=(new vector(Math.cos(angle), Math.sin(angle)));
-                gradientVects[gradX][gradY]=newVector;
-            }
+        int permVecNum=256;
+        vector[] permVecs=new vector[permVecNum];
+        for(int i=0;i<permVecs.length;i++){
+            double angle=this.random.nextDouble()*2*Math.PI;
+            permVecs[i]=(new vector(Math.cos(angle), Math.sin(angle)));
         }
-        this.gradientVectors=gradientVects;
+        this.permutationVectors=permVecs;
     }
     /*
     This is a helper method which will print out all of the gradient vectors using the printVector() method in vector.java
@@ -84,15 +84,41 @@ public class noisemaps extends JPanel{
     Finally, linearly interpolates between each dot product to find the average, and returns this value
     returns the average as a double
     */
-    public double perlinNoise(double x,double y, int chunkSize){
-        double u=fade(((double)(x%chunkSize))/chunkSize);
-        double v=fade(((double)(y%chunkSize))/chunkSize);
-        int xGradGrid=(int)(x/chunkSize);
-        int yGradGrid=(int)(y/chunkSize);
-        double g1=this.gradientVectors[xGradGrid][yGradGrid].dot(new vector(u,v));
+    public double perlinNoise(double x,double y, double period){
+        double u=fade((double)(x%period)/(period));
+        double v=fade((double)(y%period)/(period));
+        int xGradGrid=(int)(Math.floor(x/period));
+        int yGradGrid=(int)(Math.floor(y/period));
+        int xGradPlusOne=xGradGrid+1;
+        int yGradPlusOne=yGradGrid+1;
+
+
+        /*double g1=this.gradientVectors[xGradGrid][yGradGrid].dot(new vector(u,v));
         double g2=this.gradientVectors[xGradGrid+1][yGradGrid].dot(new vector(u-1,v));
         double g3=this.gradientVectors[xGradGrid][yGradGrid+1].dot(new vector(u,v-1));
-        double g4=this.gradientVectors[xGradGrid+1][yGradGrid+1].dot(new vector(u-1,v-1));
+        double g4=this.gradientVectors[xGradGrid+1][yGradGrid+1].dot(new vector(u-1,v-1));*/
+        /*System.out.println("new SYstem");
+        System.out.println(x);
+        System.out.println(y);
+        System.out.println(period);
+        System.out.println(xGradGrid);
+        System.out.println(yGradGrid);*/
+        if(xGradGrid>=256){
+            xGradGrid=0;
+        }
+        if(xGradPlusOne>=256){
+            xGradPlusOne=0;
+        }
+        if(yGradGrid>=256){
+            yGradGrid=0;
+        }
+        if(yGradPlusOne>=256){
+            yGradPlusOne=0;
+        }
+        double g1=this.permutationVectors[this.permVectorKeys[xGradGrid][yGradGrid]].dot(new vector(u,v));
+        double g2=this.permutationVectors[this.permVectorKeys[xGradPlusOne][yGradGrid]].dot(new vector(u-1,v));
+        double g3=this.permutationVectors[this.permVectorKeys[xGradGrid][yGradPlusOne]].dot(new vector(u,v-1));
+        double g4=this.permutationVectors[this.permVectorKeys[xGradPlusOne][yGradPlusOne]].dot(new vector(u-1,v-1));
 
         double x1=lerp(g1,g2,u);
         double x2=lerp(g3,g4,u);
@@ -104,16 +130,30 @@ public class noisemaps extends JPanel{
     This is a method which calculates a bunch of perlin noise octaves and stacks them on top of eachother to produce smoother noise
     it does this by passing into the perlinNoise() method for each octave, multiplying the frequency and amplitude of each new pass.
     */
-    public double perlin(int x, int y, int octaves, double persistence){
+    public double perlin(int x, int y, int octaves, double persistence,int period){
+        if(this.permVectorKeys==null){
+            int gridLength=256;
+            System.out.println(gridLength);
+            int[][] vectKeys=new int[gridLength][gridLength];
+            for(int i=0;i<gridLength;i++){
+                for(int j=0;j<gridLength;j++){
+                    vectKeys[i][j]=this.random.nextInt(256);
+                }
+            }
+            this.permVectorKeys=vectKeys;
+        }
         double total=0.0;
         double frequency=1.0;
         double amplitude=1.0;
         double maxVal=0.0;
         for(int i=0;i<octaves;i++){
-            total+=perlinNoise(x*frequency,y*frequency,128)*amplitude;
+            total+=perlinNoise(x,y,period/frequency)*amplitude;
             maxVal+=amplitude;
             amplitude*=persistence;
             frequency*=2;
+            /*if(period/frequency<=1.0){
+                frequency=period;
+            }*/
         }
         return total/maxVal;
     }
@@ -194,6 +234,7 @@ public class noisemaps extends JPanel{
     public double invertedWorley(int x, int y, int octaves, double persistence, int seedNum){
         return 1-worley(x,y,octaves,persistence,seedNum);
     }
+
     /*
     This generates a bufferedImage object of the actual noisemap by generating noise value between 0-255, and passing that value into each of the rgb channels.
     returns nothing 
@@ -202,10 +243,10 @@ public class noisemaps extends JPanel{
         BufferedImage newImage = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
         for(int x =0;x<this.WIDTH;x++){
             for(int y=0;y<this.HEIGHT;y++){
-                double invertedWorley=this.invertedWorley(x, y, 1, 0.4, 16);
-                double worley=this.worleyNoise(x, y, 16);
-                double perlin=this.perlin(x,y,10,0.6);
-                double value=((invertedWorley*perlin))*255;
+                //double invertedWorley=this.invertedWorley(x, y, 1, 0.4, 16);
+                //double worley=this.worleyNoise(x, y, 16);
+                double perlin=this.perlin(x,y,10,0.6,256);
+                double value=perlin*255;
                 int a=255;
                 int r=(int)value;
                 int g=(int)value;
@@ -234,5 +275,4 @@ public class noisemaps extends JPanel{
             map.display();
         });
     }
-    
 }
