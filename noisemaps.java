@@ -48,17 +48,6 @@ public class noisemaps extends JPanel{
         }
         this.permutationVectors=permVecs;
     }
-    /*
-    This is a helper method which will print out all of the gradient vectors using the printVector() method in vector.java
-    returns nothing.
-    */
-    public void printVectorArray(vector[][] array){
-        for(int x=0; x<(this.WIDTH*4);x++){
-            for(int y=0;y<(this.HEIGHT*4);y++){
-                array[x][y].printVector();
-            }
-        }
-    }
 
     /*
     This method linearly interpolates between 2 scalars, a and b, and picks the point between them, x, to get the value at that x 
