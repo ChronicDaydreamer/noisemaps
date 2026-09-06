@@ -128,7 +128,7 @@ public class noisemaps extends JPanel{
         double x1=lerp(g1,g2,u);
         double x2=lerp(g3,g4,u);
         double average=lerp(x1,x2,v);
-        return (average+1)/2;
+        return (((average+1)/2)-0.24)*1.8;
     }
 
     /*
@@ -233,8 +233,8 @@ public class noisemaps extends JPanel{
             for(int y=0;y<this.HEIGHT;y++){
                 //double invertedWorley=this.invertedWorley(x, y, 1, 0.4, 16);
                 double worley=this.worley(x, y, 2,0.6,25);
-                //double perlin=this.perlin(x,y,20,0.6,256);
-                double value=worley*255;
+                double perlin=this.perlin(x,y,8,0.6,256);
+                double value=((perlin+worley)/2)*255;
                 int a=255;
                 int r=(int)value;
                 int g=(int)value;
