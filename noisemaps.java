@@ -17,11 +17,12 @@ import java.io.*;
 */
 public class noisemaps extends JPanel{
     BufferedImage img;
-    int WIDTH=2048;
-    int HEIGHT=2048;
+    int WIDTH=256;
+    int HEIGHT=256;
     int chunkSize=16;
     vector[][] worleySeeds;
     vector[] permutationVectors;
+    vector[][] plateVectors;
     int[][] permVectorKeys;
     Random random;
     long seed;
@@ -160,14 +161,12 @@ public class noisemaps extends JPanel{
     */
     public double worleyNoise(int x, int y, int seedNum){
         int gridLength=(int)(Math.ceil(Math.sqrt(seedNum)));
-        if(this.worleySeeds==null){
-            
-        }
         double u=(double)(x%(this.WIDTH/gridLength))/(this.WIDTH/gridLength);
         double v=(double)(y%(this.HEIGHT/gridLength))/(this.HEIGHT/gridLength);
         vector currentVector=new vector(u,v);
         int currentSeedGridCoordX=x/(this.WIDTH/gridLength);
         int currentSeedGridCoordY=y/(this.HEIGHT/gridLength);
+        vector closestSeed;
         
         double distance=100000.0;
         int xGrid=0;
@@ -189,7 +188,9 @@ public class noisemaps extends JPanel{
                     yGrid=0;
                 }
                 if(new vector(currentVector.getX()-i,currentVector.getY()-j).getDistance(new vector(this.worleySeeds[xGrid][yGrid].getX(),this.worleySeeds[xGrid][yGrid].getY()))<distance){
-                    distance=new vector(currentVector.getX()-i,currentVector.getY()-j).getDistance(new vector(this.worleySeeds[xGrid][yGrid].getX(),this.worleySeeds[xGrid][yGrid].getY()));
+                    closestSeed=new vector(this.worleySeeds[xGrid][yGrid].getX(),this.worleySeeds[xGrid][yGrid].getY());
+                    distance=new vector(currentVector.getX()-i,currentVector.getY()-j).getDistance(closestSeed);
+                    
                 }
             }
         }
@@ -219,6 +220,64 @@ public class noisemaps extends JPanel{
         return total/maxValue;
     } 
 
+    public vector closestWorleySeed(int x, int y, int seedNum){
+        int gridLength=(int)(Math.ceil(Math.sqrt(seedNum)));
+        double u=(double)(x%(this.WIDTH/gridLength))/(this.WIDTH/gridLength);
+        double v=(double)(y%(this.HEIGHT/gridLength))/(this.HEIGHT/gridLength);
+        vector currentVector=new vector(u,v);
+        int currentSeedGridCoordX=x/(this.WIDTH/gridLength);
+        int currentSeedGridCoordY=y/(this.HEIGHT/gridLength);
+        vector closestSeed;
+        
+        double distance=100000.0;
+        int xGrid=0;
+        int yGrid=0;
+        int closestXGrid=0;
+        int closestYGrid=0;
+
+        for(int i=-1;i<2;i++){
+            for(int j=-1;j<2;j++){
+                xGrid=currentSeedGridCoordX+i;
+                yGrid=currentSeedGridCoordY+j;
+                if(currentSeedGridCoordX+i<0){
+                    xGrid=gridLength-1;
+                }
+                if(currentSeedGridCoordX+i>gridLength-1){
+                    xGrid=0;
+                }
+                if(currentSeedGridCoordY+j<0){
+                    yGrid=gridLength-1;
+                }
+                if(currentSeedGridCoordY+j>gridLength-1){
+                    yGrid=0;
+                }
+                if(new vector(currentVector.getX()-i,currentVector.getY()-j).getDistance(new vector(this.worleySeeds[xGrid][yGrid].getX(),this.worleySeeds[xGrid][yGrid].getY()))<distance){
+                    closestSeed=new vector(this.worleySeeds[xGrid][yGrid].getX(),this.worleySeeds[xGrid][yGrid].getY());
+                    distance=new vector(currentVector.getX()-i,currentVector.getY()-j).getDistance(closestSeed);
+                    closestXGrid=xGrid;
+                    closestYGrid=yGrid;  
+                }
+            }
+        }
+        return new vector(closestXGrid,closestYGrid);
+    }
+
+    public double worleyPlatePressure(int x, int y, int seedNum){
+        vector[][] plateVectors=new vector[this.worleySeeds.length][this.worleySeeds[0].length];
+        for(int i=0;i<plateVectors.length;i++){
+            for(int j=0;j<plateVectors[i].length;j++){
+                plateVectors[i][j]=new vector(this.random.nextDouble(), this.random.nextDouble());
+            }
+        }
+        this.plateVectors=plateVectors;
+        for(int i=-1;i<2;i++){
+            for(int j=-1;j<0;j++){
+                
+            }
+        }
+        return 1.0;
+    }
+
     public double invertedWorley(int x, int y, int octaves, double persistence, int seedNum){
         return 1-worley(x,y,octaves,persistence,seedNum);
     }
@@ -232,9 +291,10 @@ public class noisemaps extends JPanel{
         for(int x =0;x<this.WIDTH;x++){
             for(int y=0;y<this.HEIGHT;y++){
                 //double invertedWorley=this.invertedWorley(x, y, 1, 0.4, 16);
-                double worley=this.worley(x, y, 2,0.6,25);
-                double perlin=this.perlin(x,y,8,0.6,256);
-                double value=((perlin+worley)/2)*255;
+                double worley=this.worley(x, y, 1,0.6,16);
+                //double perlin=this.perlin(x,y,8,0.6,256);
+                //double worleyPressure=this.worleyPlatePressure(x, y, 16);
+                double value=((worley))*255;
                 int a=255;
                 int r=(int)value;
                 int g=(int)value;
