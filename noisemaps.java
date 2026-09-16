@@ -40,7 +40,7 @@ public class noisemaps extends JPanel{
     returns nothing 
     */
     public noisemaps(){
-        this.seed=100;
+        this.seed=200;
         this.random = new Random(seed);
         int permVecNum=256;
         vector[] permVecs=new vector[permVecNum];
@@ -276,9 +276,11 @@ public class noisemaps extends JPanel{
         int gridX=(int)(x/(this.WIDTH/gridLength));
         int gridY=(int)(y/(this.HEIGHT/gridLength));
         Plate closestPlate=null;
+        Plate secondClosestPlate=null;
         int xGrid=0;
         int yGrid=0;
         double distance=100000.0;
+        double secondClosestDistance=100000.0;
         vector currentVector=new vector(x,y);
         for (int i=-1;i<2;i++){
             for(int j=-1;j<2;j++){
@@ -297,13 +299,23 @@ public class noisemaps extends JPanel{
                     yGrid=0;
                 }
                 double testedDistance=new vector(currentVector.getX()-i,currentVector.getY()-j).getDistance(new vector(this.plateList[xGrid][yGrid].getCoordinates().getX(),this.plateList[xGrid][yGrid].getCoordinates().getY()));
-                if(testedDistance<distance){
-                    distance=testedDistance;
-                    closestPlate=this.plateList[xGrid][yGrid];
+                if (testedDistance < distance) {
+                    secondClosestDistance = distance;
+                    secondClosestPlate = closestPlate;
+                    distance = testedDistance;
+                    closestPlate = this.plateList[xGrid][yGrid];
+                } else if (testedDistance < secondClosestDistance) {
+                    secondClosestDistance = testedDistance;
+                    secondClosestPlate = this.plateList[xGrid][yGrid];
                 }
             }
         }
-        return distance/(this.WIDTH/gridLength);
+        double maxDist = (this.WIDTH / gridLength) * Math.sqrt(2);
+        distance=distance/maxDist;
+        if (closestPlate.getType() == 1) {
+            return 1-distance;
+        }
+        return distance;
     }
 
     public double platePressure(int x, int y){
@@ -348,14 +360,21 @@ public class noisemaps extends JPanel{
         double boundaryFactor=1.0-(secondClosestDistance-distance)/(Math.sqrt(2)*(this.WIDTH/4));
         Plate plateA=closestPlate;
         Plate plateB=secondClosestPlate;
-        boundaryFactor=Math.max(0.0,Math.min(1.0,boundaryFactor));
+        //boundaryFactor=Math.max(0.0,Math.min(1.0,boundaryFactor));
         vector fromAtoB = new vector(plateB.getCoordinates().getX() - plateA.getCoordinates().getX(),plateB.getCoordinates().getY() - plateA.getCoordinates().getY()).normalize();
 
-        vector relativeMovement = new vector(plateA.getDirection().getX() - plateB.getDirection().getX(),plateA.getDirection().getY() - plateB.getDirection().getY());
+        vector relativeMovement = new vector(plateA.getDirection().getX() - plateB.getDirection().getX(),plateA.getDirection().getY() - plateB.getDirection().getY()).normalize();
         double convergence = relativeMovement.dot(fromAtoB);
-        convergence = Math.max(0.0, Math.min(1.0, convergence));
-        boundaryFactor = Math.pow(boundaryFactor, 10.0);
-        return boundaryFactor*convergence;
+        //convergence = Math.max(0.0, Math.min(1.0, convergence));
+        boundaryFactor = Math.pow(boundaryFactor,10);
+        double combinedFactor=(boundaryFactor*convergence+1)/2;
+        if(closestPlate.getType()==0){
+            combinedFactor=(1-combinedFactor)*0.3+0.1;
+        }else{
+            combinedFactor=combinedFactor*0.5+0.5;
+        }
+        secondClosestDistance=1-secondClosestDistance/((this.WIDTH/gridLength)*Math.sqrt(4));
+        return combinedFactor;
     }
 
     public double invertedWorley(int x, int y, int octaves, double persistence, int seedNum){
@@ -371,22 +390,43 @@ public class noisemaps extends JPanel{
         for(int x =0;x<this.WIDTH;x++){
             for(int y=0;y<this.HEIGHT;y++){
                 //double invertedWorley=this.invertedWorley(x, y, 1, 0.4, 16);
-                //double worley=this.worley(x, y, 1,0.6,16);
-                //double perlin=this.perlin(x,y,8,0.6,256);
+                double worley=this.worley(x, y, 5,0.6,32);
+                double perlin=this.perlin(x,y,8,0.6,256);
                 double plateNoise=this.plateNoise(x, y);
                 double platePressure=this.platePressure(x, y);
-                double value=((plateNoise+platePressure)/2)*255;
+                double value=((plateNoise))*255;
                 if(value>255||value<0){
                     System.out.println(platePressure);
                 }
                 //System.out.println(value);
+                if(x>0&&y>0){
+                    int argb=newImage.getRGB(x-1, y)>>8;
+                    value=value+argb/2;
+                }
                 int a=255;
                 int r=(int)value;
                 int g=(int)value;
                 int b=(int)value;
+                /*/if(value<80){
+                    r=0;
+                    g=0;
+                    b=255;
+                }
+                if(value>200){
+                    r=255;
+                    g=255;
+                    b=255;
+                }
+                if(value>80&&value<200){
+                    r=0;
+                    g=255;
+                    b=0;
+                }*/
+                
                 int rgbValue = (a << 24) | (r << 16) | (g << 8) | b;
                 newImage.setRGB(x, y, rgbValue);
             }
+
         }
         for(int i =0;i<4;i++){
             for(int j=0;j<4;j++){
