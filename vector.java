@@ -44,6 +44,14 @@ public class vector {
 
         return Math.sqrt(Math.pow(other.getX()-this.getX(),2)+Math.pow(other.getY()-this.getY(),2));
     }
+    public vector addVector(vector otherVector){
+        double[] newVals=this.vals.clone();
+        for(int i=0;i<otherVector.vals.length;i++){
+            newVals[i]+=otherVector.vals[i];
+        }
+        vector newVector=new vector(newVals);
+        return newVector;
+    }
     public static void main(String args[]){
         vector vector=new vector(0.6517509285982154,0.758433073561118);
         System.out.println(vector.getMagnitude());
